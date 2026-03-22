@@ -1,0 +1,122 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Memory Jars — Application Schema",
+  "description": "Data schema for the Memory Jars app. Stored in IndexedDB (browser) and exportable as JSON.",
+  "version": "2.0.0",
+  "author": "@luminabom",
+
+  "stores": {
+    "users": {
+      "description": "Registered user accounts",
+      "keyPath": "id",
+      "autoIncrement": true,
+      "indexes": [
+        { "name": "by_username", "keyPath": "username", "unique": true }
+      ],
+      "schema": {
+        "id": { "type": "integer", "description": "Auto-incremented primary key" },
+        "username": { "type": "string", "minLength": 2, "maxLength": 32, "description": "Unique display name" },
+        "pin_hash": { "type": "string", "description": "SHA-256 hash of 6-digit PIN (never stored in plain text)" },
+        "avatar_color": { "type": "string", "description": "Hex color for avatar circle" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "last_login": { "type": "string", "format": "date-time" },
+        "settings": {
+          "type": "object",
+          "properties": {
+            "lang": { "type": "string", "enum": ["en","th","zh","ja","ko"], "default": "en" },
+            "theme": { "type": "string", "enum": ["warm","dark","pastel"], "default": "warm" },
+            "sort_mode": { "type": "string", "default": "az" }
+          }
+        }
+      }
+    },
+
+    "categories": {
+      "description": "Shelf categories (per user + global showcase)",
+      "keyPath": "id",
+      "autoIncrement": true,
+      "indexes": [
+        { "name": "by_owner", "keyPath": "owner_id" },
+        { "name": "by_name", "keyPath": "name" }
+      ],
+      "schema": {
+        "id": { "type": "integer" },
+        "name": { "type": "string", "maxLength": 60 },
+        "owner_id": { "type": ["integer","null"], "description": "null = global showcase category" },
+        "sort_order": { "type": "integer", "default": 0 },
+        "created_at": { "type": "string", "format": "date-time" }
+      }
+    },
+
+    "jars": {
+      "description": "Memory jar containers",
+      "keyPath": "id",
+      "indexes": [
+        { "name": "by_owner", "keyPath": "owner_id" },
+        { "name": "by_category", "keyPath": "category_id" },
+        { "name": "by_created", "keyPath": "created_at" }
+      ],
+      "schema": {
+        "id": { "type": "string", "description": "UUID" },
+        "owner_id": { "type": ["integer","null"], "description": "null = showcase jar (read-only for guests)" },
+        "name": { "type": "string", "maxLength": 60 },
+        "category_id": { "type": "integer" },
+        "color": { "type": "string", "enum": ["amber","rose","teal","blue","purple","coral","green","pink","navy","olive"] },
+        "icon": { "type": "string", "description": "Single emoji icon or empty string" },
+        "desc": { "type": "string", "maxLength": 200 },
+        "note": { "type": "string", "maxLength": 500, "description": "Hover note shown on shelf" },
+        "ctags": { "type": "array", "items": { "type": "string" }, "description": "Creator/display tags" },
+        "is_showcase": { "type": "boolean", "default": false },
+        "created_at": { "type": "string", "format": "date-time" },
+        "updated_at": { "type": "string", "format": "date-time" }
+      }
+    },
+
+    "memories": {
+      "description": "Individual memory entries inside jars",
+      "keyPath": "id",
+      "indexes": [
+        { "name": "by_jar", "keyPath": "jar_id" },
+        { "name": "by_date", "keyPath": "date" },
+        { "name": "by_type", "keyPath": "type" }
+      ],
+      "schema": {
+        "id": { "type": "string", "description": "UUID" },
+        "jar_id": { "type": "string" },
+        "type": { "type": "string", "enum": ["note","photo"] },
+        "text": { "type": "string", "description": "Note text content (type=note only)" },
+        "data": { "type": "string", "description": "Base64 image data URI (type=photo only)" },
+        "caption": { "type": "string", "maxLength": 200 },
+        "date": { "type": "string", "format": "date" },
+        "mood": { "type": "string", "description": "Emoji mood indicator" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "created_at": { "type": "string", "format": "date-time" }
+      }
+    },
+
+    "sessions": {
+      "description": "Active login sessions (ephemeral, cleared on logout)",
+      "keyPath": "key",
+      "schema": {
+        "key": { "type": "string", "const": "current" },
+        "user_id": { "type": "integer" },
+        "username": { "type": "string" },
+        "avatar_color": { "type": "string" },
+        "settings": { "type": "object" },
+        "expires_at": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+
+  "export_format": {
+    "description": "Full JSON export structure",
+    "properties": {
+      "export_version": { "type": "string" },
+      "exported_at": { "type": "string", "format": "date-time" },
+      "exported_by": { "type": "string" },
+      "categories": { "type": "array" },
+      "jars": { "type": "array" },
+      "memories": { "type": "array" }
+    }
+  }
+}

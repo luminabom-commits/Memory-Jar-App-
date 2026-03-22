@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#5C3820">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Memory Jars — @luminabom</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Lato:wght@300;400;700&family=Sarabun:wght@300;400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="app-shell">
+
+  <!-- ── HEADER ── -->
+  <header id="top-header">
+    <div class="header-logo">Memory <em>Jars</em></div>
+    <div class="header-spacer"></div>
+    <div class="lang-switcher">
+      <button class="lang-btn active" onclick="setLang('en')" id="lb-en">EN</button>
+      <button class="lang-btn" onclick="setLang('th')" id="lb-th">ไทย</button>
+      <button class="lang-btn" onclick="setLang('zh')" id="lb-zh">中文</button>
+      <button class="lang-btn" onclick="setLang('ja')" id="lb-ja">日本語</button>
+      <button class="lang-btn" onclick="setLang('ko')" id="lb-ko">한국어</button>
+    </div>
+    <div class="header-user" id="header-user"></div>
+  </header>
+
+  <!-- ── SIDEBAR ── -->
+  <aside id="sidebar">
+    <div class="sidebar-section">
+      <button class="sidebar-btn primary" onclick="openNewJarModal()">
+        <span class="icon">＋</span><span id="sb-label-newjar">New Jar</span>
+      </button>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label" id="sb-label-library">Library</div>
+      <button class="sidebar-btn active" onclick="showView('all')" id="sb-all">
+        <span class="icon">🫙</span><span id="sb-label-all">All Jars</span>
+      </button>
+      <button class="sidebar-btn" onclick="showView('mine')" id="sb-mine">
+        <span class="icon">👤</span><span id="sb-label-mine">My Jars</span>
+      </button>
+      <button class="sidebar-btn" onclick="showView('showcase')" id="sb-showcase">
+        <span class="icon">✨</span><span id="sb-label-showcase">Showcase</span>
+      </button>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section">
+      <div class="sidebar-label" id="sb-label-organise">Organise</div>
+      <button class="sidebar-btn" onclick="openCategoryManager()">
+        <span class="icon">🗂</span><span id="sb-label-cats">Categories</span>
+      </button>
+      <button class="sidebar-btn" onclick="cycleSort()">
+        <span class="icon">⇅</span><span id="sb-label-sort">Sort:</span>
+        <span class="sidebar-sort-val" id="sort-val">A–Z</span>
+      </button>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section">
+      <div class="sidebar-label" id="sb-label-data">Data</div>
+      <div class="export-wrap">
+        <button class="sidebar-btn" onclick="toggleExportMenu()">
+          <span class="icon">↓</span><span id="sb-label-export">Export</span>
+        </button>
+        <div class="export-menu" id="export-menu">
+          <button class="export-item" onclick="exportJSON()">JSON</button>
+          <button class="export-item" onclick="exportCSV()">CSV</button>
+        </div>
+      </div>
+      <button class="sidebar-btn" onclick="triggerImport()">
+        <span class="icon">↑</span><span id="sb-label-import">Import</span>
+      </button>
+      <input type="file" id="import-input" accept=".json" style="display:none" onchange="doImport(event)">
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-stats" id="sidebar-stats"></div>
+    <div class="sidebar-creator">
+      <a href="https://instagram.com/luminabom" target="_blank">@luminabom</a> ·
+      <a href="https://instagram.com/luminabom.portfolio" target="_blank">luminabom.portfolio</a>
+    </div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <main id="main-content">
+
+    <!-- Mobile lang row -->
+    <div class="mobile-lang-row">
+      <button class="lang-btn active" onclick="setLang('en')" id="mlb-en">EN</button>
+      <button class="lang-btn" onclick="setLang('th')" id="mlb-th">ไทย</button>
+      <button class="lang-btn" onclick="setLang('zh')" id="mlb-zh">中文</button>
+      <button class="lang-btn" onclick="setLang('ja')" id="mlb-ja">日本語</button>
+      <button class="lang-btn" onclick="setLang('ko')" id="mlb-ko">한국어</button>
+    </div>
+
+    <!-- Privacy notice -->
+    <div class="privacy-notice" id="privacy-notice">
+      <span class="pn-icon">🔒</span>
+      <p><strong id="pn-title">Privacy:</strong> <span id="pn-text">All data is stored locally in your browser. Nothing is sent to any server. Clearing browser site data will erase all jars, memories, and accounts. Export your data regularly as a backup.</span></p>
+      <button class="pn-dismiss" onclick="dismissPrivacy()" id="pn-dismiss">✕</button>
+    </div>
+
+    <!-- Page header: title + inline search + sort pill -->
+    <div class="page-header" id="page-header">
+      <div class="page-title-row">
+        <h2 class="page-title" id="page-title">All Jars</h2>
+        <div class="page-header-actions">
+          <button class="sort-pill" onclick="cycleSort()" id="sort-pill">⇅ <span id="sort-pill-val">A–Z</span></button>
+          <button class="ph-new-btn" onclick="openNewJarModal()">＋</button>
+        </div>
+      </div>
+      <!-- Inline search bar — visible per page -->
+      <div class="inline-search-wrap">
+        <span class="search-icon">🔍</span>
+        <input class="inline-search" id="search-input" type="search" placeholder="Search jars &amp; memories…" oninput="onSearch(this.value)" autocomplete="off">
+        <button class="inline-search-clear" onclick="clearSearch()" id="search-clear-btn">✕</button>
+      </div>
+    </div>
+
+    <div id="shelves-container"></div>
+
+    <!-- Footer -->
+    <div class="portfolio-footer">
+      <div class="pf-logo">Memory <em>Jars</em></div>
+      <p class="pf-desc">A digital memory-keeping app created by <strong>Lumina Bom</strong>.</p>
+      <div class="pf-links">
+        <a class="pf-link ig" href="https://instagram.com/luminabom" target="_blank">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>@luminabom</a>
+        <a class="pf-link port" href="https://instagram.com/luminabom.portfolio" target="_blank">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>luminabom.portfolio</a>
+      </div>
+      <div class="pf-copy">This account is used to publish my work as a portfolio.</div>
+    </div>
+  </main>
+
+  <!-- Mobile bottom toolbar -->
+  <nav class="mobile-toolbar">
+    <button class="mob-btn active" id="mob-all" onclick="showView('all');setMob(this)">
+      <span class="mob-icon">🫙</span><span class="mob-label" id="mob-label-all">All</span>
+    </button>
+    <button class="mob-btn" id="mob-mine" onclick="showView('mine');setMob(this)">
+      <span class="mob-icon">👤</span><span class="mob-label" id="mob-label-mine">Mine</span>
+    </button>
+    <button class="mob-btn-new" onclick="openNewJarModal()">＋</button>
+    <button class="mob-btn" id="mob-showcase" onclick="showView('showcase');setMob(this)">
+      <span class="mob-icon">✨</span><span class="mob-label" id="mob-label-showcase">Showcase</span>
+    </button>
+    <button class="mob-btn" onclick="openCategoryManager()">
+      <span class="mob-icon">🗂</span><span class="mob-label" id="mob-label-cats">Categories</span>
+    </button>
+  </nav>
+</div>
+
+<!-- ── AUTH MODAL ── -->
+<div class="modal-overlay" id="auth-modal">
+  <div class="modal auth-card">
+    <div class="auth-logo">Memory <em>Jars</em></div>
+    <div class="auth-subtitle" id="auth-subtitle"></div>
+    <!-- Login -->
+    <div id="auth-login">
+      <div class="form-row"><label id="lbl-un">Username</label><input type="text" id="login-username" autocomplete="username" autocapitalize="none" spellcheck="false"></div>
+      <div class="form-row">
+        <label id="lbl-pin">PIN (6 digits)</label>
+        <input type="password" id="login-pin" maxlength="6" inputmode="numeric" pattern="[0-9]*" autocomplete="current-password" oninput="liveValidatePIN(this.value,'login-pin-hint','login-pin-dots')">
+        <div class="pin-display" id="login-pin-dots"></div>
+        <div class="form-hint" id="login-pin-hint"></div>
+      </div>
+      <div class="form-hint err" id="login-error" style="margin-bottom:10px"></div>
+      <button class="btn btn-primary" style="width:100%" onclick="doLogin()" id="login-btn">Log In</button>
+      <div class="auth-toggle"><span id="lbl-no-acc">New here?</span> <a onclick="switchAuthPanel('register')" id="lbl-go-reg">Create Account</a></div>
+      <div class="auth-guest-link" onclick="closeModal('auth-modal')" id="lbl-back-jars">← Back to jars</div>
+    </div>
+    <!-- Register -->
+    <div id="auth-register" style="display:none">
+      <div class="form-row">
+        <label id="lbl-reg-un">Username</label>
+        <input type="text" id="reg-username" autocomplete="username" autocapitalize="none" spellcheck="false" oninput="liveValidateUsername(this.value)">
+        <div class="form-hint" id="reg-username-hint"></div>
+      </div>
+      <div class="form-row">
+        <label id="lbl-reg-pin">PIN (6 digits)</label>
+        <input type="password" id="reg-pin" maxlength="6" inputmode="numeric" pattern="[0-9]*" autocomplete="new-password" oninput="liveValidatePIN(this.value,'reg-pin-hint','reg-pin-dots')">
+        <div class="pin-display" id="reg-pin-dots"></div>
+        <div class="form-hint" id="reg-pin-hint"></div>
+      </div>
+      <div class="form-row">
+        <label id="lbl-confirm-pin">Confirm PIN</label>
+        <input type="password" id="reg-confirm-pin" maxlength="6" inputmode="numeric" pattern="[0-9]*" autocomplete="new-password" oninput="liveValidateConfirmPIN()">
+        <div class="pin-display" id="reg-confirm-dots"></div>
+        <div class="form-hint" id="reg-confirm-hint"></div>
+      </div>
+      <div class="form-hint err" id="reg-error" style="margin-bottom:10px"></div>
+      <button class="btn btn-primary" style="width:100%" onclick="doRegister()" id="register-btn">Create Account</button>
+      <div class="auth-toggle"><span id="lbl-has-acc">Already have an account?</span> <a onclick="switchAuthPanel('login')" id="lbl-go-login">Log In</a></div>
+      <div class="auth-guest-link" onclick="closeModal('auth-modal')" id="lbl-back-jars2">← Back to jars</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── JAR MODAL ── -->
+<div class="modal-overlay" id="jar-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="jar-modal-title"></div>
+      <div class="modal-header-actions">
+        <button class="btn btn-secondary btn-sm" onclick="openEditJarModal(currentOpenJarId)" id="jar-edit-btn">✏ <span id="jar-edit-label">Edit</span></button>
+        <button class="close-btn" onclick="closeJarModal()">✕</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div id="jar-desc-line" class="jar-desc-line" style="display:none"></div>
+      <div id="jar-note-full" class="jar-note-full" style="display:none"></div>
+      <div class="mem-filter-bar">
+        <button class="mem-chip active" onclick="setMemFilter('all')" data-f="all" id="mf-all">All</button>
+        <button class="mem-chip" onclick="setMemFilter('note')" data-f="note" id="mf-notes">Notes</button>
+        <button class="mem-chip" onclick="setMemFilter('photo')" data-f="photo" id="mf-photos">Photos</button>
+      </div>
+      <div class="mem-grid" id="mem-grid"></div>
+      <div class="add-mem-form" id="add-mem-form">
+        <h3 id="add-mem-title">Add a memory</h3>
+        <div class="tab-row">
+          <button class="tab-btn active" onclick="switchMemTab('note')" id="tab-note-btn">📝 Note</button>
+          <button class="tab-btn" onclick="switchMemTab('photo')" id="tab-photo-btn">📷 Photo</button>
+        </div>
+        <div class="tab-panel active" id="tab-note">
+          <div class="form-row"><label id="lbl-your-note">Your note</label><textarea id="note-text" rows="3"></textarea></div>
+          <div class="form-row-inline">
+            <div class="form-row"><label id="lbl-mood">Mood</label>
+              <select id="note-mood"><option value="">—</option><option>😊</option><option>😢</option><option>😍</option><option>😂</option><option>😌</option><option>🤩</option><option>😔</option><option>😤</option></select>
+            </div>
+            <div class="form-row"><label id="lbl-date">Date</label><input type="date" id="note-date"></div>
+          </div>
+          <div class="form-row"><label id="lbl-tags">Tags</label>
+            <div class="tags-input-wrap" id="note-tags-wrap" onclick="this.querySelector('input').focus()">
+              <input type="text" id="note-tag-input" onkeydown="handleTagKey(event,'note')">
+            </div>
+          </div>
+          <br><button class="btn btn-primary" onclick="saveNote()" id="save-note-btn">Save note</button>
+        </div>
+        <div class="tab-panel" id="tab-photo">
+          <div class="form-row"><label id="lbl-caption">Caption (optional)</label><input type="text" id="photo-caption"></div>
+          <div class="form-row-inline">
+            <div class="form-row"><label id="lbl-photo-mood">Mood</label>
+              <select id="photo-mood"><option value="">—</option><option>😊</option><option>😢</option><option>😍</option><option>😂</option><option>😌</option><option>🤩</option><option>😔</option><option>😤</option></select>
+            </div>
+            <div class="form-row"><label id="lbl-photo-date">Date</label><input type="date" id="photo-date"></div>
+          </div>
+          <div class="form-row"><label id="lbl-photo-tags">Tags</label>
+            <div class="tags-input-wrap" id="photo-tags-wrap" onclick="this.querySelector('input').focus()">
+              <input type="text" id="photo-tag-input" onkeydown="handleTagKey(event,'photo')">
+            </div>
+          </div>
+          <div class="upload-zone" onclick="document.getElementById('photo-input').click()">
+            <input type="file" id="photo-input" accept="image/*" multiple onchange="handlePhotoSelect(event)">
+            <div class="upload-icon">🖼</div>
+            <p id="upload-hint">Tap to choose photos (multiple OK)</p>
+          </div>
+          <div class="photo-previews" id="photo-previews"></div>
+          <br><button class="btn btn-primary" onclick="savePhotos()" id="save-photo-btn">Save photo(s)</button>
+        </div>
+      </div>
+      <div id="showcase-note" class="showcase-note" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── NEW JAR MODAL ── -->
+<div class="modal-overlay" id="new-jar-modal">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <div class="modal-title" id="nj-modal-title">Create a new jar</div>
+      <button class="close-btn" onclick="closeModal('new-jar-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row"><label id="nj-lbl-name">Jar name</label><input type="text" id="nj-name" maxlength="50" onkeydown="if(event.key==='Enter')createJar()"></div>
+      <div class="form-row"><label id="nj-lbl-note">Hover note</label><textarea id="nj-note" rows="2" style="resize:none"></textarea></div>
+      <div class="form-row"><label id="nj-lbl-colour">Colour</label><div class="color-swatches" id="nj-colors"></div></div>
+      <div class="form-row"><label id="nj-lbl-icon">Icon</label><div class="icon-picker" id="nj-icons"></div></div>
+      <div class="form-row"><label id="nj-lbl-cat">Category</label><input type="text" id="nj-category" list="cat-dl"><datalist id="cat-dl"></datalist></div>
+      <div class="form-row"><label id="nj-lbl-desc">Description</label><input type="text" id="nj-desc" maxlength="200"></div>
+      <div class="form-row"><label id="nj-lbl-tags">Creator tags</label><input type="text" id="nj-tags" placeholder="Featured, New, @you"></div>
+      <!-- Cover image for jar thumbnail -->
+      <div class="form-row">
+        <label id="nj-lbl-cover">Cover image (shows inside jar)</label>
+        <div class="upload-zone upload-zone-sm" onclick="document.getElementById('nj-cover-input').click()">
+          <input type="file" id="nj-cover-input" accept="image/*" style="display:none" onchange="handleCoverSelect(event,'nj')">
+          <div id="nj-cover-preview" class="cover-preview-wrap" style="display:none"><img id="nj-cover-img" src="" alt="" style="width:100%;max-height:100px;object-fit:cover;border-radius:7px"></div>
+          <div id="nj-cover-placeholder"><div class="upload-icon" style="font-size:1.3rem">🖼</div><p style="font-size:.72rem;color:var(--text-muted)" id="nj-cover-hint">Optional cover photo</p></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="createJar()" id="nj-create-btn">Create jar</button>
+      <button class="btn btn-ghost" onclick="closeModal('new-jar-modal')" id="nj-cancel-btn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── EDIT JAR MODAL ── -->
+<div class="modal-overlay" id="edit-jar-modal">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <div class="modal-title" id="ej-modal-title">Edit jar</div>
+      <button class="close-btn" onclick="closeModal('edit-jar-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row"><label id="ej-lbl-name">Jar name</label><input type="text" id="ej-name" maxlength="50"></div>
+      <div class="form-row"><label id="ej-lbl-note">Hover note</label><textarea id="ej-note" rows="2" style="resize:none"></textarea></div>
+      <div class="form-row"><label id="ej-lbl-colour">Colour</label><div class="color-swatches" id="ej-colors"></div></div>
+      <div class="form-row"><label id="ej-lbl-icon">Icon</label><div class="icon-picker" id="ej-icons"></div></div>
+      <div class="form-row"><label id="ej-lbl-cat">Category</label><input type="text" id="ej-category" list="cat-dl"></div>
+      <div class="form-row"><label id="ej-lbl-desc">Description</label><input type="text" id="ej-desc" maxlength="200"></div>
+      <div class="form-row"><label id="ej-lbl-tags">Creator tags</label><input type="text" id="ej-tags"></div>
+      <div class="form-row">
+        <label id="ej-lbl-cover">Cover image</label>
+        <div class="upload-zone upload-zone-sm" onclick="document.getElementById('ej-cover-input').click()">
+          <input type="file" id="ej-cover-input" accept="image/*" style="display:none" onchange="handleCoverSelect(event,'ej')">
+          <div id="ej-cover-preview" class="cover-preview-wrap" style="display:none"><img id="ej-cover-img" src="" alt="" style="width:100%;max-height:100px;object-fit:cover;border-radius:7px"></div>
+          <div id="ej-cover-placeholder"><div class="upload-icon" style="font-size:1.3rem">🖼</div><p style="font-size:.72rem;color:var(--text-muted)">Change cover photo</p></div>
+        </div>
+        <button class="btn btn-ghost btn-xs" style="margin-top:6px" onclick="clearCover('ej')" id="ej-clear-cover">Remove cover</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="saveEditJar()" id="ej-save-btn">Save changes</button>
+      <button class="btn btn-danger btn-sm" onclick="confirmDeleteCurrentJar()" id="ej-delete-btn">Delete jar</button>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('edit-jar-modal')" style="margin-left:auto" id="ej-cancel-btn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── CATEGORY MODAL ── -->
+<div class="modal-overlay" id="cat-modal">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <div class="modal-title" id="cat-modal-title">Categories</div>
+      <button class="close-btn" onclick="closeCategoryManager()">✕</button>
+    </div>
+    <div class="modal-body">
+      <ul class="cat-list" id="cat-list"></ul>
+      <div class="cat-new-row">
+        <input type="text" id="new-cat-input" onkeydown="if(event.key==='Enter')addCategory()">
+        <button class="btn btn-primary btn-sm" onclick="addCategory()" id="cat-add-btn">＋ Add</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── CONFIRM MODAL ── -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="confirm-box">
+    <h3 id="confirm-title"></h3>
+    <p id="confirm-msg"></p>
+    <div class="btn-row">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('confirm-modal')" id="confirm-cancel">Cancel</button>
+      <button class="btn btn-danger btn-sm" id="confirm-ok">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── LIGHTBOX ── -->
+<div id="lightbox" onclick="closeLightbox()">
+  <img id="lb-img" src="" alt="">
+  <div id="lb-cap"></div>
+</div>
+<div id="toast"></div>
+
+<script type="module">
+import * as DB from './db.js';
+import * as Auth from './auth.js';
+import { LANGS, JAR_COLORS, JAR_ICONS, SHOWCASE_DATA, appState as APP,
+         t, uid, today, fdate, escH, trunc, sortJars, jarMatchesSearch } from './app.js';
+
+// ── GLOBALS ───────────────────────────────────────
+let currentUser = null;
+let viewMode = 'all';
+let categoriesCache = [], jarsCache = [], memoriesCache = {};
+let pendingPhotos = [], noteTags = [], photoTags = [];
+let newColor = JAR_COLORS[0].id, newIcon = '', newCoverData = null;
+let editColor = JAR_COLORS[0].id, editIcon = '', editCoverData = null, editCoverCleared = false;
+let editingJarId = null, memFilter = 'all';
+let currentOpenJarId = null;
+window.currentOpenJarId = null;
+
+// Make key functions global
+const exposed = {
+  setLang, openAuthModal, closeModal, doLogin, doRegister, switchAuthPanel,
+  liveValidateUsername, liveValidatePIN, liveValidateConfirmPIN,
+  showView, setMob, openNewJarModal, createJar, openEditJarModal, saveEditJar,
+  confirmDeleteCurrentJar, confirmDeleteJarById, dupeJar,
+  openCategoryManager, closeCategoryManager, addCategory, cycleSort,
+  toggleExportMenu, exportJSON, exportCSV, triggerImport, doImport,
+  closeJarModal, setMemFilter, switchMemTab, handleTagKey, saveNote,
+  handlePhotoSelect, savePhotos, handleCoverSelect, clearCover,
+  closeLightbox, openLB, showCtx, delMem, rmTag,
+  renameCatInline, deleteCat, inlineCatEdit, removeCat,
+  onSearch, clearSearch, dismissPrivacy
+};
+Object.assign(window, exposed);
+
+// ── PREFS (localStorage — works for guests AND logged-in users) ──────
+const PREFS_KEY = 'mj-prefs-v1';
+
+function loadPrefs() {
+  try {
+    const raw = localStorage.getItem(PREFS_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch { return {}; }
+}
+
+function savePrefs(patch) {
+  try {
+    const current = loadPrefs();
+    localStorage.setItem(PREFS_KEY, JSON.stringify({ ...current, ...patch }));
+  } catch {}
+}
+
+function applyPrefs() {
+  const p = loadPrefs();
+  // Language — highest priority: logged-in user DB setting > localStorage > default
+  const lang = currentUser?.settings?.lang || p.lang || 'en';
+  if (['en','th','zh','ja','ko'].includes(lang)) APP.lang = lang;
+
+  // Sort mode
+  const sort = currentUser?.settings?.sort_mode || p.sort || 'az';
+  if (['az','za','newest','oldest'].includes(sort)) APP.sortMode = sort;
+
+  // Last view
+  const view = p.view || 'all';
+  if (['all','mine','showcase'].includes(view)) viewMode = view;
+
+  // Sync active states
+  document.querySelectorAll('.lang-btn').forEach(b => {
+    const code = b.id?.replace(/^(lb|mlb)-/,'');
+    if (['en','th','zh','ja','ko'].includes(code)) b.classList.toggle('active', code === APP.lang);
+  });
+  ['all','mine','showcase'].forEach(v => {
+    document.getElementById('sb-'+v)?.classList.toggle('active', v === viewMode);
+    document.getElementById('mob-'+v)?.classList.toggle('active', v === viewMode);
+  });
+}
+
+// ── BOOT ─────────────────────────────────────────
+async function boot() {
+  await DB.openDB();
+  currentUser = await Auth.initAuth();
+  await DB.seedShowcaseIfNeeded(SHOWCASE_DATA);
+  await refreshCache();
+
+  // Apply saved preferences BEFORE first render
+  applyPrefs();
+  applyLang();
+  renderHeaderUser();
+  renderSidebarStats();
+  renderShelves();
+  updateCatDatalist();
+
+  // Privacy notice
+  if (loadPrefs().privacyDismissed) {
+    const pn = document.getElementById('privacy-notice');
+    if (pn) pn.style.display = 'none';
+  }
+}
+boot().catch(console.error);
+
+function dismissPrivacy() {
+  document.getElementById('privacy-notice').style.display = 'none';
+  savePrefs({ privacyDismissed: true });
+}
+
+// ── CACHE ─────────────────────────────────────────
+async function refreshCache() {
+  const ownerId = currentUser?.user_id ?? 0;
+  if (currentUser) {
+    categoriesCache = await DB.getCategoriesForUser(currentUser.user_id);
+    jarsCache = await DB.getJarsForUser(currentUser.user_id);
+  } else {
+    const showcaseCats = (await DB.getCategoriesForUser(null)).filter(c=>c.owner_id===null);
+    const localCats = await DB.getCategoriesForUser(0);
+    categoriesCache = [...showcaseCats, ...localCats.filter(c=>c.owner_id===0)];
+    const showcaseJars = await DB.getShowcaseJars();
+    const localJars = await DB.getJarsForUser(0);
+    jarsCache = [...showcaseJars, ...localJars];
+  }
+  memoriesCache = {};
+  for (const jar of jarsCache) memoriesCache[jar.id] = await DB.getMemoriesForJar(jar.id);
+}
+function getCategoryName(catId) {
+  return categoriesCache.find(x=>x.id===catId)?.name || t('myJars');
+}
+
+// ── I18N ──────────────────────────────────────────
+function setLang(lang) {
+  APP.lang = lang;
+  // Persist for everyone — guests use localStorage, logged-in users also update DB
+  savePrefs({ lang });
+  if (currentUser) DB.updateUserSettings(currentUser.user_id, { lang });
+  document.querySelectorAll('.lang-btn').forEach(b => {
+    const code = b.id?.replace(/^(lb|mlb)-/,'');
+    if (['en','th','zh','ja','ko'].includes(code)) b.classList.toggle('active', code===lang);
+  });
+  applyLang(); renderShelves(); renderSidebarStats();
+}
+
+function applyLang() {
+  const L = LANGS[APP.lang] || LANGS.en;
+  document.title = `${L.appTitle} — @luminabom`;
+  // Sidebar
+  setText('sb-label-newjar', L.newJar);
+  setText('sb-label-library', L.library);
+  setText('sb-label-all', L.allJars);
+  setText('sb-label-mine', L.myJars);
+  setText('sb-label-showcase', L.showcase);
+  setText('sb-label-organise', L.organise);
+  setText('sb-label-cats', L.categories);
+  setText('sb-label-sort', L.sort+':');
+  setText('sb-label-data', L.data);
+  setText('sb-label-export', L.exportData);
+  setText('sb-label-import', L.importData);
+  // Mobile toolbar
+  setText('mob-label-all', L.allJars);
+  setText('mob-label-mine', L.myJars);
+  setText('mob-label-showcase', L.showcase);
+  setText('mob-label-cats', L.categories);
+  // Privacy
+  setText('pn-title', L.privacyTitle+':');
+  setText('pn-text', L.privacyText);
+  setText('pn-dismiss', L.dismiss);
+  // Sort
+  const sortLabels = {az:L.sortAZ,za:L.sortZA,newest:L.sortNewest,oldest:L.sortOldest};
+  setText('sort-val', sortLabels[APP.sortMode]||L.sortAZ);
+  setText('sort-pill-val', sortLabels[APP.sortMode]||L.sortAZ);
+  // Search
+  const si = document.getElementById('search-input');
+  if (si) si.placeholder = L.searchPlaceholder;
+  // Page title
+  const pageTitles = {all:L.allJars, mine:L.myJars, showcase:L.showcase};
+  setText('page-title', pageTitles[viewMode]||L.allJars);
+  // Auth
+  setText('lbl-un', L.username); setText('lbl-pin', L.pin);
+  setText('lbl-reg-un', L.username); setText('lbl-reg-pin', L.pin);
+  setText('lbl-confirm-pin', L.confirmPin);
+  setText('lbl-no-acc', L.noAccount); setText('lbl-has-acc', L.hasAccount);
+  setText('lbl-go-reg', L.register); setText('lbl-go-login', L.login);
+  setText('lbl-back-jars', L.backToJars); setText('lbl-back-jars2', L.backToJars);
+  setText('login-btn', L.login); setText('register-btn', L.register);
+  // Jar modal
+  setText('jar-edit-label', L.edit);
+  setText('mf-all', L.all); setText('mf-notes', L.notes); setText('mf-photos', L.photos);
+  setText('add-mem-title', L.addMemory);
+  setText('tab-note-btn', L.note); setText('tab-photo-btn', L.photo);
+  setText('lbl-your-note', L.yourNote);
+  setText('lbl-mood', L.mood); setText('lbl-date', L.date); setText('lbl-tags', L.tags);
+  setText('lbl-caption', L.caption);
+  setText('lbl-photo-mood', L.mood); setText('lbl-photo-date', L.date); setText('lbl-photo-tags', L.tags);
+  setText('save-note-btn', L.saveNote); setText('save-photo-btn', L.savePhoto);
+  setText('upload-hint', L.clickToChoose);
+  const nt = document.getElementById('note-text'); if (nt) nt.placeholder = L.writeHere;
+  const nti = document.getElementById('note-tag-input'); if (nti) nti.placeholder = L.typeTag;
+  const pti = document.getElementById('photo-tag-input'); if (pti) pti.placeholder = L.typeTag;
+  // New jar
+  setText('nj-modal-title', L.createJar);
+  setText('nj-lbl-name', L.jarName); setText('nj-lbl-note', L.jarNote);
+  setText('nj-lbl-colour', L.colour); setText('nj-lbl-icon', L.icon);
+  setText('nj-lbl-cat', L.category); setText('nj-lbl-desc', L.jarDesc);
+  setText('nj-lbl-tags', L.creatorTags); setText('nj-lbl-cover', t('clickToChoose'));
+  setText('nj-create-btn', L.createJarBtn); setText('nj-cancel-btn', L.cancel);
+  setText('nj-cover-hint', L.clickToChoose);
+  // Edit jar
+  setText('ej-modal-title', L.editJar);
+  setText('ej-lbl-name', L.jarName); setText('ej-lbl-note', L.jarNote);
+  setText('ej-lbl-colour', L.colour); setText('ej-lbl-icon', L.icon);
+  setText('ej-lbl-cat', L.category); setText('ej-lbl-desc', L.jarDesc);
+  setText('ej-lbl-tags', L.creatorTags);
+  setText('ej-save-btn', L.saveChanges); setText('ej-delete-btn', L.deleteJar);
+  setText('ej-cancel-btn', L.cancel);
+  // Category modal
+  setText('cat-modal-title', L.manageCategories);
+  setText('cat-add-btn', '＋ '+L.addCategory);
+  // Confirm modal
+  setText('confirm-cancel', L.cancel);
+}
+function setText(id, val) {
+  const el = document.getElementById(id);
+  if (el && val !== undefined) el.textContent = val;
+}
+
+// ── HEADER ────────────────────────────────────────
+function renderHeaderUser() {
+  const el = document.getElementById('header-user');
+  const L = LANGS[APP.lang]||LANGS.en;
+  if (currentUser) {
+    const ini = currentUser.username.slice(0,2).toUpperCase();
+    el.innerHTML = `<div class="header-avatar" style="background:${currentUser.avatar_color}">${ini}</div>
+      <span class="header-username">${escH(currentUser.username)}</span>
+      <button class="header-login-btn" onclick="doLogout()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,220,160,.3)">${L.logout}</button>`;
+  } else {
+    el.innerHTML = `<button class="header-login-btn" onclick="openAuthModal('login')">${L.signIn}</button>`;
+  }
+}
+
+// ── AUTH ──────────────────────────────────────────
+function openAuthModal(panel='login') {
+  switchAuthPanel(panel);
+  ['login-error','reg-error'].forEach(id=>{ const e=document.getElementById(id); if(e)e.textContent=''; });
+  document.getElementById('auth-modal').classList.add('open');
+  setTimeout(()=>document.getElementById(panel==='login'?'login-username':'reg-username').focus(),120);
+}
+function switchAuthPanel(panel) {
+  document.getElementById('auth-login').style.display = panel==='login'?'block':'none';
+  document.getElementById('auth-register').style.display = panel==='register'?'block':'none';
+  const L = LANGS[APP.lang]||LANGS.en;
+  document.getElementById('auth-subtitle').textContent = L.syncHint;
+  renderPinDots('login-pin-dots',0); renderPinDots('reg-pin-dots',0); renderPinDots('reg-confirm-dots',0);
+}
+function renderPinDots(id,n) {
+  const el=document.getElementById(id); if(!el)return;
+  el.innerHTML=Array.from({length:6},(_,i)=>`<div class="pin-dot${i<n?' filled':''}"></div>`).join('');
+}
+function liveValidateUsername(val) {
+  const r=Auth.validateUsername(val);
+  const el=document.getElementById('reg-username-hint');
+  if(el){el.textContent=r.msg;el.className='form-hint '+(r.ok?'ok':'err');}
+}
+function liveValidatePIN(val,hintId,dotsId) {
+  const r=Auth.validatePINInput(val);
+  renderPinDots(dotsId,val.length);
+  const el=document.getElementById(hintId);
+  if(el){el.textContent=r.msg;el.className='form-hint '+(r.ok?'ok':'err');}
+}
+function liveValidateConfirmPIN() {
+  const p1=document.getElementById('reg-pin').value, p2=document.getElementById('reg-confirm-pin').value;
+  renderPinDots('reg-confirm-dots',p2.length);
+  const el=document.getElementById('reg-confirm-hint'); if(!el)return;
+  if(!p2.length){el.textContent='';return;}
+  const ok=p1===p2; el.textContent=ok?'✓ PINs match':'PINs do not match';
+  el.className='form-hint '+(ok?'ok':'err');
+}
+async function doLogin() {
+  const username=document.getElementById('login-username').value.trim();
+  const pin=document.getElementById('login-pin').value;
+  const errEl=document.getElementById('login-error'); errEl.textContent='';
+  document.getElementById('login-btn').textContent='…';
+  try {
+    const r=await Auth.login(username,pin);
+    currentUser=r.session;
+    // Pull user's stored language/sort from DB and write into localStorage
+    const dbLang=currentUser.settings?.lang||'en';
+    const dbSort=currentUser.settings?.sort_mode||'az';
+    APP.lang=dbLang; APP.sortMode=dbSort;
+    savePrefs({ lang:dbLang, sort:dbSort });
+    closeModal('auth-modal');
+    await refreshCache(); applyPrefs(); applyLang(); renderHeaderUser(); renderSidebarStats(); renderShelves();
+    toast(t('loginSuccess'));
+  } catch(err){errEl.textContent=err.message;}
+  finally{document.getElementById('login-btn').textContent=t('login');}
+}
+async function doRegister() {
+  const username=document.getElementById('reg-username').value.trim();
+  const pin=document.getElementById('reg-pin').value, cpin=document.getElementById('reg-confirm-pin').value;
+  const errEl=document.getElementById('reg-error'); errEl.textContent='';
+  document.getElementById('register-btn').textContent='…';
+  try {
+    const r=await Auth.register(username,pin,cpin);
+    currentUser=r.session;
+    // Save whatever language/sort the user had as a guest into their new account
+    const guestPrefs=loadPrefs();
+    if(guestPrefs.lang) await DB.updateUserSettings(currentUser.user_id,{lang:guestPrefs.lang,sort_mode:guestPrefs.sort||'az'});
+    const defs=['Memories','Travel','Family','Daily Life'];
+    for(let i=0;i<defs.length;i++) await DB.createCategory(defs[i],currentUser.user_id,i);
+    closeModal('auth-modal'); await refreshCache(); applyPrefs(); applyLang(); renderHeaderUser(); renderSidebarStats(); renderShelves();
+    toast(t('registerSuccess'));
+  } catch(err){errEl.textContent=err.message;}
+  finally{document.getElementById('register-btn').textContent=t('register');}
+}
+async function doLogout() {
+  await Auth.logout(); currentUser=null;
+  // Language preference stays (don't wipe it on logout — user chose it)
+  await refreshCache(); renderHeaderUser(); renderSidebarStats(); applyLang(); renderShelves();
+  toast(t('loggedOut'));
+}
+
+// ── SIDEBAR STATS ─────────────────────────────────
+function renderSidebarStats() {
+  const el=document.getElementById('sidebar-stats'); if(!el)return;
+  const ownerId=currentUser?.user_id??0;
+  const myJ=jarsCache.filter(j=>j.owner_id===ownerId);
+  const myM=myJ.flatMap(j=>memoriesCache[j.id]||[]);
+  const L=LANGS[APP.lang]||LANGS.en;
+  el.innerHTML=`<div class="sidebar-label" style="padding-bottom:5px">${L.statsTitle}</div>
+    <div class="sidebar-stat-row"><span>${L.statsJars}</span><strong>${myJ.length}</strong></div>
+    <div class="sidebar-stat-row"><span>${L.statsMems}</span><strong>${myM.length}</strong></div>
+    <div class="sidebar-stat-row"><span>${L.statsPhotos}</span><strong>${myM.filter(m=>m.type==='photo').length}</strong></div>`;
+}
+
+// ── VIEWS ─────────────────────────────────────────
+function showView(mode) {
+  viewMode=mode;
+  savePrefs({ view: mode });
+  ['all','mine','showcase'].forEach(v=>{
+    document.getElementById('sb-'+v)?.classList.toggle('active',v===mode);
+    document.getElementById('mob-'+v)?.classList.toggle('active',v===mode);
+  });
+  const L=LANGS[APP.lang]||LANGS.en;
+  const pageTitles={all:L.allJars,mine:L.myJars,showcase:L.showcase};
+  setText('page-title',pageTitles[mode]||L.allJars);
+  renderShelves();
+}
+function setMob(btn) {
+  document.querySelectorAll('.mob-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ── SEARCH ────────────────────────────────────────
+function onSearch(v){APP.searchQuery=v.trim().toLowerCase();renderShelves();}
+function clearSearch(){APP.searchQuery='';const si=document.getElementById('search-input');if(si)si.value='';renderShelves();}
+
+// ── SORT ──────────────────────────────────────────
+function cycleSort() {
+  const m=['az','za','newest','oldest'];
+  APP.sortMode=m[(m.indexOf(APP.sortMode)+1)%m.length];
+  // Persist for everyone
+  savePrefs({ sort: APP.sortMode });
+  if (currentUser) DB.updateUserSettings(currentUser.user_id, { sort_mode: APP.sortMode });
+  applyLang(); renderShelves();
+}
+
+// ── RENDER SHELVES ────────────────────────────────
+function renderShelves() {
+  const L=LANGS[APP.lang]||LANGS.en;
+  const container=document.getElementById('shelves-container'); if(!container)return;
+  const ownerId=currentUser?.user_id??0;
+
+  let visible=jarsCache.filter(jar=>{
+    if(viewMode==='mine') return jar.owner_id===ownerId;
+    if(viewMode==='showcase') return jar.is_showcase;
+    return true;
+  }).filter(jar=>jarMatchesSearch(jar,memoriesCache[jar.id]||[],APP.searchQuery));
+
+  const groups={};
+  for(const jar of visible){
+    const cat=getCategoryName(jar.category_id);
+    (groups[cat]=groups[cat]||[]).push(jar);
+  }
+  container.innerHTML='';
+  if(!Object.keys(groups).length){
+    container.innerHTML=`<p class="no-jars-msg">${APP.searchQuery?L.noResults:L.noJars}</p>`;
+    return;
+  }
+  const catOrder=categoriesCache.map(c=>c.name);
+  const sortedCats=[...catOrder.filter(n=>groups[n]),...Object.keys(groups).filter(n=>!catOrder.includes(n))];
+  for(const catName of sortedCats){
+    if(!groups[catName])continue;
+    const sorted=sortJars(groups[catName],APP.sortMode);
+    const catObj=categoriesCache.find(c=>c.name===catName);
+    const canEditCat=catObj&&catObj.owner_id===ownerId;
+    const sec=document.createElement('div'); sec.className='shelf-block';
+    sec.innerHTML=`
+      <div class="shelf-header">
+        <div class="shelf-name">${escH(catName)}</div>
+        ${canEditCat?`<button class="shelf-action edit" onclick="renameCatInline('${escQ(catName)}')">✏️</button>
+        <button class="shelf-action del" onclick="deleteCat('${escQ(catName)}')">🗑</button>`:''}
+      </div>
+      <div class="shelf-surface">
+        <div class="jars-row">${sorted.length?sorted.map(renderJarCard).join(''):`<div class="empty-shelf">${L.emptyShelf}</div>`}</div>
+      </div>`;
+    container.appendChild(sec);
+  }
+}
+
+// ── JAR CARD with PHOTO THUMBNAILS ────────────────
+function renderJarCard(jar) {
+  const col=JAR_COLORS.find(c=>c.id===jar.color)||JAR_COLORS[0];
+  const mems=memoriesCache[jar.id]||[];
+  const cnt=mems.length;
+  const {fill,glass,stroke}=col;
+  const ic=jar.icon||'';
+  const L=LANGS[APP.lang]||LANGS.en;
+
+  // Collect up to 3 photo thumbnails (cover first, then latest photos)
+  const photos=mems.filter(m=>m.type==='photo');
+  const coverData = jar.cover_image || (photos.length>0?photos[photos.length-1].data:null);
+  const thumb2 = photos.length>1 ? photos[photos.length-2].data : null;
+  const thumb3 = photos.length>2 ? photos[photos.length-3].data : null;
+
+  // Fill level (memories fill the jar)
+  const fillH=Math.min(cnt*7+photos.length*5,62), fy=97-fillH;
+
+  // Build photo inset elements for SVG using foreignObject is unreliable; use image element
+  let photoInset = '';
+  if (coverData) {
+    // Single large thumbnail in jar body
+    photoInset = `<defs><clipPath id="jarclip-${jar.id}"><path d="M15 ${fy+2} L65 ${fy+2} L65 93 Q65 95 63 95 L17 95 Q15 95 15 93 Z"/></clipPath></defs>
+      <image href="${coverData}" x="15" y="${fy+2}" width="50" height="${93-fy}" preserveAspectRatio="xMidYMid slice" clip-path="url(#jarclip-${jar.id})" opacity=".78"/>`;
+    if (thumb2) {
+      photoInset += `<image href="${thumb2}" x="15" y="${fy+2}" width="25" height="${93-fy}" preserveAspectRatio="xMidYMid slice" clip-path="url(#jarclip-${jar.id})" opacity=".65"/>`;
+    }
+  }
+
+  const ctags=(jar.ctags||[]).map(tag=>{
+    let cls='cat';
+    if(tag.startsWith('@'))cls='ig';
+    else if(tag==='New')cls='new-tag';
+    else if(tag==='Featured')cls='featured';
+    else if(tag==='Thai')cls='thai';
+    return`<span class="jar-tag ${cls}">${escH(tag)}</span>`;
+  }).join('');
+  const note=jar.note?`<div class="jar-bubble">"${escH(jar.note)}"</div>`:'';
+
+  return`<div class="jar-card" onclick="openJar('${jar.id}')" oncontextmenu="showCtx(event,'${jar.id}')" title="${escH(jar.name)}">
+    <div class="jar-svg-wrap">
+      <svg class="jar-svg" viewBox="0 0 80 106" xmlns="http://www.w3.org/2000/svg">
+        <!-- Lid -->
+        <rect x="18" y="4" width="44" height="10" rx="4" fill="${stroke}" opacity=".92"/>
+        <rect x="22" y="2" width="36" height="6" rx="3" fill="${fill}" opacity=".72"/>
+        <!-- Body -->
+        <path d="M14 20 Q12 22 12 28 L12 88 Q12 96 20 98 L60 98 Q68 96 68 88 L68 28 Q68 22 66 20 Z" fill="${glass}" stroke="${stroke}" stroke-width="1.5"/>
+        <!-- Photo inset (renders behind glass overlay) -->
+        ${photoInset}
+        <!-- Glass overlay to make photos look inside -->
+        <path d="M14 20 Q12 22 12 28 L12 88 Q12 96 20 98 L60 98 Q68 96 68 88 L68 28 Q68 22 66 20 Z" fill="${glass}" stroke="none" opacity=".45"/>
+        <!-- Shine -->
+        <path d="M20 26 Q19 50 20 80" stroke="rgba(255,255,255,.6)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        ${!coverData&&cnt>0?`<path d="M14 ${fy} Q14 ${fy-2} 20 ${fy-2} L60 ${fy-2} Q66 ${fy-2} 66 ${fy} L66 88 Q66 96 60 98 L20 98 Q14 96 14 88 Z" fill="${fill}" opacity=".30"/>`:'' }
+        <!-- Icon or label -->
+        ${ic&&!coverData?`<text x="40" y="54" text-anchor="middle" font-size="20" font-family="sans-serif">${ic}</text>`:''}
+        ${!ic&&!coverData?`<rect x="20" y="56" width="40" height="22" rx="3" fill="rgba(255,252,240,.88)" stroke="${stroke}" stroke-width=".8"/><line x1="24" y1="63" x2="56" y2="63" stroke="${stroke}" stroke-width=".5" opacity=".5"/><line x1="24" y1="68" x2="56" y2="68" stroke="${stroke}" stroke-width=".5" opacity=".5"/>`:'' }
+        <!-- Memory count badge -->
+        ${cnt>0?`<circle cx="62" cy="24" r="11" fill="${fill}" stroke="#fff" stroke-width="1.5"/><text x="62" y="28.5" text-anchor="middle" font-size="9" font-weight="700" fill="#fff" font-family="Lato,sans-serif">${cnt>99?'99+':cnt}</text>`:'' }
+        <!-- Photo count indicator -->
+        ${photos.length>0&&!coverData?`<text x="40" y="92" text-anchor="middle" font-size="7" fill="${stroke}" font-family="Lato,sans-serif" opacity=".7">📷${photos.length}</text>`:''}
+      </svg>
+      ${note}
+    </div>
+    <div class="jar-name">${escH(jar.name)}</div>
+    <div class="jar-count">${L.memCnt(cnt)}</div>
+    ${ctags?`<div class="jar-tags">${ctags}</div>`:''}
+  </div>`;
+}
+
+// ── CONTEXT MENU ──────────────────────────────────
+function showCtx(e,id) {
+  e.preventDefault(); e.stopPropagation();
+  document.querySelector('.fctx')?.remove();
+  const jar=jarsCache.find(j=>j.id===id);
+  const ownerId=currentUser?.user_id??0;
+  const L=LANGS[APP.lang]||LANGS.en;
+  const m=document.createElement('div'); m.className='fctx';
+  // Keep menu inside viewport
+  const x=Math.min(e.clientX, window.innerWidth-160);
+  const y=Math.min(e.clientY, window.innerHeight-160);
+  m.style.top=y+'px'; m.style.left=x+'px';
+  m.innerHTML=`<button onclick="openJar('${id}');this.closest('.fctx').remove()">📂 ${L.open}</button>
+    <button onclick="openEditJarModal('${id}');this.closest('.fctx').remove()">✏️ ${L.edit}</button>
+    <button onclick="dupeJar('${id}');this.closest('.fctx').remove()">📋 ${L.duplicate}</button>
+    <button class="danger" onclick="confirmDeleteJarById('${id}');this.closest('.fctx').remove()">🗑 ${L.deleteJar}</button>`;
+  document.body.appendChild(m);
+  setTimeout(()=>document.addEventListener('click',()=>document.querySelector('.fctx')?.remove(),{once:true}),30);
+}
+async function dupeJar(id) {
+  const jar=jarsCache.find(j=>j.id===id); if(!jar)return;
+  const ownerId=currentUser?.user_id??0;
+  const nj=await DB.createJar({...jar,name:jar.name+' (copy)'},ownerId);
+  for(const m of (memoriesCache[id]||[])) await DB.createMemory(nj.id,m);
+  await refreshCache(); renderShelves(); renderSidebarStats(); toast(t('duplicated'));
+}
+async function confirmDeleteJarById(id) {
+  const jar=jarsCache.find(j=>j.id===id); if(!jar)return;
+  showConfirm(jar.name,t('confirmDeleteJar'),async()=>{
+    await DB.deleteJar(id); closeModal('edit-jar-modal');
+    if(currentOpenJarId===id)closeJarModal();
+    await refreshCache(); renderShelves(); renderSidebarStats(); toast(t('deleted'));
+  });
+}
+
+// ── JAR OPEN / CLOSE ──────────────────────────────
+async function openJar(id) {
+  currentOpenJarId=id; window.currentOpenJarId=id;
+  memFilter='all'; noteTags=[]; photoTags=[]; pendingPhotos=[];
+  const jar=jarsCache.find(j=>j.id===id); if(!jar)return;
+  const ownerId=currentUser?.user_id??0;
+  // ALL jars are editable (including showcase)
+  const canEdit=true;
+  const canAdd=true;
+  const L=LANGS[APP.lang]||LANGS.en;
+
+  document.getElementById('jar-modal-title').textContent=jar.name+(jar.icon?' '+jar.icon:'');
+  const dl=document.getElementById('jar-desc-line');
+  dl.textContent=jar.desc||''; dl.style.display=jar.desc?'block':'none';
+  const nl=document.getElementById('jar-note-full');
+  nl.textContent=jar.note?'"'+jar.note+'"':''; nl.style.display=jar.note?'block':'none';
+  document.getElementById('jar-edit-btn').style.display='';
+  document.getElementById('add-mem-form').style.display='block';
+  document.getElementById('showcase-note').style.display='none';
+
+  // Reset form
+  const nt=document.getElementById('note-text'); if(nt){nt.value='';nt.placeholder=L.writeHere;}
+  const pc=document.getElementById('photo-caption'); if(pc)pc.value='';
+  const nd=document.getElementById('note-date'); if(nd)nd.value=today();
+  const pd=document.getElementById('photo-date'); if(pd)pd.value=today();
+  ['note-mood','photo-mood'].forEach(i=>{const e=document.getElementById(i);if(e)e.value='';});
+  const pp=document.getElementById('photo-previews'); if(pp)pp.innerHTML='';
+  const nti=document.getElementById('note-tag-input'); if(nti)nti.placeholder=L.typeTag;
+  const pti=document.getElementById('photo-tag-input'); if(pti)pti.placeholder=L.typeTag;
+  renderTagsUI('note'); renderTagsUI('photo');
+  document.querySelectorAll('.mem-chip').forEach(c=>c.classList.toggle('active',c.dataset.f==='all'));
+  memFilter='all';
+
+  memoriesCache[id]=await DB.getMemoriesForJar(id);
+  renderMemories(jar,memoriesCache[id]);
+  document.getElementById('jar-modal').classList.add('open');
+}
+function closeJarModal(){document.getElementById('jar-modal').classList.remove('open');currentOpenJarId=null;window.currentOpenJarId=null;}
+
+// ── MEMORIES ──────────────────────────────────────
+function setMemFilter(f) {
+  memFilter=f;
+  document.querySelectorAll('.mem-chip').forEach(c=>c.classList.toggle('active',c.dataset.f===f));
+  const jar=jarsCache.find(j=>j.id===currentOpenJarId);
+  if(jar) renderMemories(jar,memoriesCache[currentOpenJarId]||[]);
+}
+function renderMemories(jar,allMems) {
+  const L=LANGS[APP.lang]||LANGS.en;
+  const mems=memFilter==='all'?allMems:allMems.filter(m=>m.type===memFilter);
+  const grid=document.getElementById('mem-grid');
+  if(!mems.length){grid.innerHTML=`<div class="empty-jar-msg">${allMems.length?L.noMemType:L.emptyJar}</div>`;return;}
+  // All memories in all jars deletable by anyone
+  grid.innerHTML=mems.map(m=>{
+    const d=fdate(m.date); const mood=m.mood?`<span class="mem-mood">${m.mood}</span>`:'';
+    if(m.type==='photo')return`<div class="mem-card" onclick="openLB('${m.id}','${jar.id}')"><img src="${m.data}" alt="">${mood}${d?`<div class="mem-date-badge">${d}</div>`:''}<div class="mem-badge">${m.caption?trunc(m.caption,12):L.photos}</div><button class="mem-del" onclick="event.stopPropagation();delMem('${m.id}','${jar.id}')">✕</button></div>`;
+    return`<div class="mem-card"><div class="note-body"><span>${escH(m.text)}</span></div>${mood}${d?`<div class="mem-date-badge">${d}</div>`:''}<div class="mem-badge">${L.note.replace(/📝 /,'')}</div><button class="mem-del" onclick="event.stopPropagation();delMem('${m.id}','${jar.id}')">✕</button></div>`;
+  }).join('');
+}
+async function delMem(mid,jid) {
+  await DB.deleteMemory(mid);
+  memoriesCache[jid]=await DB.getMemoriesForJar(jid);
+  renderMemories(jarsCache.find(j=>j.id===jid),memoriesCache[jid]);
+  renderSidebarStats(); toast(t('deleted'));
+}
+function switchMemTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',(i===0&&tab==='note')||(i===1&&tab==='photo')));
+  document.getElementById('tab-note').classList.toggle('active',tab==='note');
+  document.getElementById('tab-photo').classList.toggle('active',tab==='photo');
+}
+function handleTagKey(e,w) {
+  if(e.key!=='Enter'&&e.key!==',')return; e.preventDefault();
+  const inp=document.getElementById(w+'-tag-input'); const v=inp.value.trim().replace(/,/g,'');
+  if(v){(w==='note'?noteTags:photoTags).push(v);inp.value='';renderTagsUI(w);}
+}
+function renderTagsUI(w) {
+  const tags=w==='note'?noteTags:photoTags;
+  const wrap=document.getElementById(w+'-tags-wrap'); const inp=document.getElementById(w+'-tag-input');
+  if(!wrap||!inp)return;
+  wrap.querySelectorAll('.tag-chip').forEach(c=>c.remove());
+  tags.forEach((tag,i)=>{const chip=document.createElement('div');chip.className='tag-chip';chip.innerHTML=`${escH(tag)}<button onclick="rmTag('${w}',${i})">✕</button>`;wrap.insertBefore(chip,inp);});
+}
+function rmTag(w,i){(w==='note'?noteTags:photoTags).splice(i,1);renderTagsUI(w);}
+
+async function saveNote() {
+  const text=document.getElementById('note-text').value.trim(); if(!text)return toast(t('writeFirst'));
+  await DB.createMemory(currentOpenJarId,{type:'note',text,date:document.getElementById('note-date').value||today(),mood:document.getElementById('note-mood').value,tags:[...noteTags]});
+  memoriesCache[currentOpenJarId]=await DB.getMemoriesForJar(currentOpenJarId);
+  renderMemories(jarsCache.find(j=>j.id===currentOpenJarId),memoriesCache[currentOpenJarId]);
+  renderSidebarStats(); renderShelves();
+  document.getElementById('note-text').value=''; document.getElementById('note-mood').value='';
+  noteTags=[]; renderTagsUI('note'); toast(t('saved'));
+}
+function handlePhotoSelect(e) {
+  [...e.target.files].forEach(f=>{const r=new FileReader();r.onload=ev=>{pendingPhotos.push({data:ev.target.result});renderPhotoPreviews();};r.readAsDataURL(f);});
+}
+function renderPhotoPreviews() {
+  document.getElementById('photo-previews').innerHTML=pendingPhotos.map((p,i)=>`<div class="prev-thumb" onclick="removePP(${i})"><img src="${p.data}" alt=""></div>`).join('');
+}
+function removePP(i){pendingPhotos.splice(i,1);renderPhotoPreviews();}
+window.removePP=removePP;
+
+async function savePhotos() {
+  if(!pendingPhotos.length)return toast(t('choosePhoto'));
+  const cap=document.getElementById('photo-caption').value.trim();
+  for(const p of pendingPhotos) await DB.createMemory(currentOpenJarId,{type:'photo',data:p.data,caption:cap,date:document.getElementById('photo-date').value||today(),mood:document.getElementById('photo-mood').value,tags:[...photoTags]});
+  memoriesCache[currentOpenJarId]=await DB.getMemoriesForJar(currentOpenJarId);
+  renderMemories(jarsCache.find(j=>j.id===currentOpenJarId),memoriesCache[currentOpenJarId]);
+  renderSidebarStats(); renderShelves();
+  pendingPhotos=[]; renderPhotoPreviews();
+  document.getElementById('photo-caption').value=''; document.getElementById('photo-input').value='';
+  photoTags=[]; renderTagsUI('photo'); toast(t('saved'));
+}
+
+// ── COVER IMAGE ───────────────────────────────────
+function handleCoverSelect(e,prefix) {
+  const f=e.target.files[0]; if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    const data=ev.target.result;
+    if(prefix==='nj'){newCoverData=data;}else{editCoverData=data;editCoverCleared=false;}
+    document.getElementById(prefix+'-cover-img').src=data;
+    document.getElementById(prefix+'-cover-preview').style.display='block';
+    document.getElementById(prefix+'-cover-placeholder').style.display='none';
+  };
+  r.readAsDataURL(f);
+}
+function clearCover(prefix){
+  editCoverData=null; editCoverCleared=true;
+  document.getElementById(prefix+'-cover-preview').style.display='none';
+  document.getElementById(prefix+'-cover-placeholder').style.display='block';
+  document.getElementById(prefix+'-cover-input').value='';
+}
+
+// ── NEW JAR ───────────────────────────────────────
+function buildColorPicker(cid,sel,cb){const el=document.getElementById(cid);if(!el)return;el.innerHTML=JAR_COLORS.map(c=>`<div class="swatch${c.id===sel?' selected':''}" style="background:${c.fill}" onclick="${cb}('${c.id}')"></div>`).join('');}
+function buildIconPicker(cid,sel,cb){const el=document.getElementById(cid);if(!el)return;el.innerHTML=JAR_ICONS.map(ic=>`<span class="icon-opt${ic===sel?' selected':''}" onclick="${cb}('${ic}')">${ic}</span>`).join('')+`<span class="icon-none" onclick="${cb}('')">—</span>`;}
+function setNewColor(id){newColor=id;buildColorPicker('nj-colors',id,'setNewColor');}
+function setNewIcon(ic){newIcon=ic;buildIconPicker('nj-icons',ic,'setNewIcon');}
+function setEditColor(id){editColor=id;buildColorPicker('ej-colors',id,'setEditColor');}
+function setEditIcon(ic){editIcon=ic;buildIconPicker('ej-icons',ic,'setEditIcon');}
+window.setNewColor=setNewColor;window.setNewIcon=setNewIcon;window.setEditColor=setEditColor;window.setEditIcon=setEditIcon;
+
+function openNewJarModal() {
+  ['nj-name','nj-note','nj-desc','nj-tags','nj-category'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  newColor=JAR_COLORS[0].id; newIcon=''; newCoverData=null;
+  document.getElementById('nj-cover-preview').style.display='none';
+  document.getElementById('nj-cover-placeholder').style.display='block';
+  document.getElementById('nj-cover-input').value='';
+  buildColorPicker('nj-colors',newColor,'setNewColor');
+  buildIconPicker('nj-icons',newIcon,'setNewIcon');
+  document.getElementById('new-jar-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('nj-name').focus(),100);
+}
+async function createJar() {
+  const name=document.getElementById('nj-name').value.trim(); if(!name)return toast(t('nameJar'));
+  const catName=document.getElementById('nj-category').value.trim()||t('myJars');
+  const ownerId=currentUser?.user_id??0;
+  let catObj=categoriesCache.find(c=>c.name===catName&&(c.owner_id===ownerId||c.owner_id===null));
+  if(!catObj) catObj=await DB.createCategory(catName,ownerId,categoriesCache.length);
+  const tagsRaw=document.getElementById('nj-tags').value.trim();
+  await DB.createJar({
+    name,color:newColor,icon:newIcon,category_id:catObj.id,
+    desc:document.getElementById('nj-desc').value.trim(),
+    note:document.getElementById('nj-note').value.trim(),
+    ctags:tagsRaw?tagsRaw.split(',').map(s=>s.trim()).filter(Boolean):[],
+    cover_image:newCoverData||null,
+  },ownerId);
+  closeModal('new-jar-modal'); await refreshCache(); renderShelves(); renderSidebarStats(); updateCatDatalist();
+  toast(t('jarCreated'));
+}
+
+// ── EDIT JAR (all jars editable) ──────────────────
+function openEditJarModal(id) {
+  const jar=jarsCache.find(j=>j.id===id); if(!jar)return;
+  editingJarId=id; editColor=jar.color; editIcon=jar.icon||''; editCoverData=null; editCoverCleared=false;
+  document.getElementById('ej-name').value=jar.name;
+  document.getElementById('ej-note').value=jar.note||'';
+  document.getElementById('ej-desc').value=jar.desc||'';
+  document.getElementById('ej-tags').value=(jar.ctags||[]).join(', ');
+  document.getElementById('ej-category').value=getCategoryName(jar.category_id);
+  // Cover
+  const hasCover=!!jar.cover_image;
+  document.getElementById('ej-cover-preview').style.display=hasCover?'block':'none';
+  document.getElementById('ej-cover-placeholder').style.display=hasCover?'none':'block';
+  if(hasCover){document.getElementById('ej-cover-img').src=jar.cover_image;}
+  document.getElementById('ej-cover-input').value='';
+  buildColorPicker('ej-colors',editColor,'setEditColor');
+  buildIconPicker('ej-icons',editIcon,'setEditIcon');
+  document.getElementById('edit-jar-modal').classList.add('open');
+}
+async function saveEditJar() {
+  const jar=jarsCache.find(j=>j.id===editingJarId); if(!jar)return;
+  const name=document.getElementById('ej-name').value.trim(); if(!name)return toast(t('nameJar'));
+  const catName=document.getElementById('ej-category').value.trim()||getCategoryName(jar.category_id);
+  const ownerId=currentUser?.user_id??0;
+  let catObj=categoriesCache.find(c=>c.name===catName&&(c.owner_id===ownerId||c.owner_id===null));
+  if(!catObj) catObj=await DB.createCategory(catName,ownerId,categoriesCache.length);
+  const tagsRaw=document.getElementById('ej-tags').value.trim();
+  const updates={
+    name,color:editColor,icon:editIcon,category_id:catObj.id,
+    desc:document.getElementById('ej-desc').value.trim(),
+    note:document.getElementById('ej-note').value.trim(),
+    ctags:tagsRaw?tagsRaw.split(',').map(s=>s.trim()).filter(Boolean):[],
+  };
+  if(editCoverData) updates.cover_image=editCoverData;
+  if(editCoverCleared) updates.cover_image=null;
+  await DB.updateJar(editingJarId,updates);
+  closeModal('edit-jar-modal'); await refreshCache(); renderShelves();
+  if(currentOpenJarId===editingJarId){const j=jarsCache.find(x=>x.id===editingJarId);if(j)document.getElementById('jar-modal-title').textContent=j.name+(j.icon?' '+j.icon:'');}
+  toast(t('saved'));
+}
+function confirmDeleteCurrentJar(){confirmDeleteJarById(editingJarId);}
+
+// ── CATEGORIES ────────────────────────────────────
+function openCategoryManager(){renderCatList();document.getElementById('cat-modal').classList.add('open');}
+function closeCategoryManager(){closeModal('cat-modal');refreshCache().then(renderShelves);}
+function renderCatList() {
+  const ownerId=currentUser?.user_id??0;
+  const L=LANGS[APP.lang]||LANGS.en;
+  const cats=categoriesCache.filter(c=>c.owner_id===ownerId);
+  document.getElementById('cat-list').innerHTML=cats.map(c=>
+    `<li><span class="cat-n">${escH(c.name)}</span><button class="shelf-action edit" onclick="inlineCatEdit(${c.id})">✏️</button><button class="shelf-action del" onclick="removeCat(${c.id})">🗑</button></li>`
+  ).join('')||`<li><span class="cat-n" style="color:var(--text-muted)">${L.noCats}</span></li>`;
+}
+async function inlineCatEdit(id){
+  const cat=categoriesCache.find(c=>c.id===id); if(!cat)return;
+  const name=prompt(t('renameCategory'),cat.name); if(!name||name.trim()===cat.name)return;
+  await DB.updateCategory(id,name.trim()); await refreshCache(); renderCatList();
+}
+async function removeCat(id){await DB.deleteCategory(id);await refreshCache();renderCatList();}
+async function addCategory(){
+  const ownerId=currentUser?.user_id??0;
+  const v=document.getElementById('new-cat-input').value.trim(); if(!v)return;
+  await DB.createCategory(v,ownerId,categoriesCache.length);
+  document.getElementById('new-cat-input').value=''; await refreshCache(); renderCatList(); updateCatDatalist();
+}
+async function renameCatInline(catName){
+  const name=prompt(t('renameCategory'),catName); if(!name||name.trim()===catName)return;
+  const ownerId=currentUser?.user_id??0;
+  const cat=categoriesCache.find(c=>c.name===catName&&c.owner_id===ownerId); if(!cat)return;
+  await DB.updateCategory(cat.id,name.trim()); await refreshCache(); renderShelves();
+}
+async function deleteCat(catName){
+  const ownerId=currentUser?.user_id??0;
+  const cat=categoriesCache.find(c=>c.name===catName&&c.owner_id===ownerId); if(!cat)return;
+  showConfirm(catName,t('confirmDeleteCat'),async()=>{await DB.deleteCategory(cat.id);await refreshCache();renderShelves();});
+}
+function updateCatDatalist(){
+  const dl=document.getElementById('cat-dl'); if(!dl)return;
+  dl.innerHTML=categoriesCache.map(c=>`<option value="${escH(c.name)}">`).join('');
+}
+
+// ── LIGHTBOX ──────────────────────────────────────
+function openLB(mid,jid){
+  const m=(memoriesCache[jid]||[]).find(x=>x.id===mid); if(!m||m.type!=='photo')return;
+  document.getElementById('lb-img').src=m.data;
+  const cap=document.getElementById('lb-cap'); cap.textContent=m.caption||''; cap.style.display=m.caption?'block':'none';
+  document.getElementById('lightbox').classList.add('open');
+}
+function closeLightbox(){document.getElementById('lightbox').classList.remove('open');}
+
+// ── EXPORT / IMPORT ───────────────────────────────
+function toggleExportMenu(){const m=document.getElementById('export-menu');m.classList.toggle('open');if(m.classList.contains('open'))setTimeout(()=>document.addEventListener('click',()=>m.classList.remove('open'),{once:true}),30);}
+async function exportJSON(){
+  const ownerId=currentUser?.user_id??0;
+  const data=await DB.exportUserData(ownerId,currentUser?.username||'guest');
+  dlFile(JSON.stringify(data,null,2),'memory-jars.json','application/json');
+  toast(t('exportOK')); document.getElementById('export-menu').classList.remove('open');
+}
+async function exportCSV(){
+  const ownerId=currentUser?.user_id??0;
+  const data=await DB.exportUserData(ownerId,currentUser?.username||'guest');
+  const rows=[['Jar','Category','Type','Text/Caption','Date','Mood','Tags']];
+  for(const jar of data.jars){const ms=data.memories.filter(m=>m.jar_id===jar.id);if(!ms.length){rows.push([jar.name,'','','','','','']);continue;}ms.forEach(m=>rows.push([jar.name,jar.category_id||'',m.type,m.text||m.caption||'',m.date||'',m.mood||'',(m.tags||[]).join(';')]));}
+  dlFile(rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n'),'memory-jars.csv','text/csv');
+  toast(t('exportOK')); document.getElementById('export-menu').classList.remove('open');
+}
+function dlFile(c,n,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([c],{type}));a.download=n;a.click();}
+function triggerImport(){document.getElementById('import-input').click();}
+async function doImport(e){
+  const f=e.target.files[0]; if(!f)return;
+  const ownerId=currentUser?.user_id??0;
+  const r=new FileReader();
+  r.onload=async ev=>{
+    try{const res=await DB.importUserData(ownerId,ev.target.result);await refreshCache();renderShelves();renderSidebarStats();toast(`${t('importOK')} (${res.jars} jars, ${res.memories} memories)`);}
+    catch{toast(t('importFail'));}
+    e.target.value='';
+  };
+  r.readAsText(f);
+}
+
+// ── CONFIRM ───────────────────────────────────────
+function showConfirm(title,msg,onOk){
+  document.getElementById('confirm-title').textContent=title;
+  document.getElementById('confirm-msg').textContent=msg;
+  document.getElementById('confirm-ok').textContent=t('deleteJar');
+  document.getElementById('confirm-ok').onclick=()=>{closeModal('confirm-modal');onOk();};
+  document.getElementById('confirm-modal').classList.add('open');
+}
+window.showConfirm=showConfirm;
+
+// ── UTILS ─────────────────────────────────────────
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2500);}
+function closeModal(id){document.getElementById(id)?.classList.remove('open');}
+function escQ(s){return String(s).replace(/'/g,"\\'");}
+window.toast=toast; window.closeModal=closeModal;
+
+// ── EVENTS ────────────────────────────────────────
+['jar-modal','new-jar-modal','edit-jar-modal','cat-modal','auth-modal'].forEach(id=>{
+  document.getElementById(id)?.addEventListener('click',e=>{if(e.target.id===id)e.target.classList.remove('open');});
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape')['lightbox','jar-modal','new-jar-modal','edit-jar-modal','cat-modal','confirm-modal','auth-modal'].forEach(id=>document.getElementById(id)?.classList.remove('open'));
+});
+</script>
+</body>
+</html>
